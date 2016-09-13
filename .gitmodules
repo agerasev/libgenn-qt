@@ -1,0 +1,3 @@
+[submodule "libgenn"]
+	path = libgenn
+	url = https://github.com/nthend/libgenn.git
