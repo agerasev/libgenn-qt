@@ -1,4 +1,4 @@
-#include <genn/network.hpp>
+#pragma once
 
 #include <random>
 #include <cmath>
@@ -7,76 +7,30 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QWheelEvent>
+#include <QTimer>
 
 #include <genn/network.hpp>
 
 #include <la/vec.hpp>
 
-class NodeView : public QGraphicsItem {
-public:
-	bool exist = true;
-	
-	float bias = 0.0f;
-	vec2 pos = vec2(0,0);
-	vec2 vel = vec2(0,0);
-	double rad = 30;
-	
-	void sync(const NodeGene &node) {
-		bias = node.bias;
-	}
-	
-	void move(double dt) {
-		pos += vel*dt;
-		vel = vec2(0,0);
-	}
-	
-	QRectF boundingRect() const override {
-		return QRectF(pos.x() - rad, pos.y() - rad, 2*rad, 2*rad);
-	}
-	
-	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
-		painter->setBrush(QBrush(QColor(255*(bias > 0)*(1 - exp(-bias)),0,255*(bias < 0)*(1 - exp(bias)))));
-		painter->setPen(Qt::NoPen);
-		painter->drawEllipse(boundingRect());
-	}
-};
-
-class LinkView : public QGraphicsItem {
-public:
-	bool exist = true;
-	
-	float weight = 0.0f;
-	NodeView *src = nullptr;
-	NodeView *dst = nullptr;
-	
-	void sync(const LinkGene &link) {
-		weight = link.weight;
-	}
-
-	void affect() {
-		// ...
-	}
-	
-	QRectF boundingRect() const override {
-		return QRectF();
-	}
-	
-	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
-		
-	}
-};
+#include "nodeview.hpp"
+#include "linkview.hpp"
 
 class NetView : public QGraphicsView {
+	Q_OBJECT
 public:
-	QGraphicsScene scene;
+	QGraphicsScene *scene;
 	std::map<NodeID, NodeView *> nodes;
 	std::map<LinkID, LinkView *> links;
 	
 	std::minstd_rand re;
 	std::uniform_real_distribution<> unif;
 	
+	bool done = true;
+	
 	NetView() : QGraphicsView() {
-		setScene(&scene);
+		scene = new QGraphicsScene();
+		setScene(scene);
 		
 		initView();
 	}
@@ -91,13 +45,16 @@ public:
 	}
 	
 private:
-	void init(NodeView *nv) {
-		double rf = 100*nodes.size();
+	void init(NodeID id, NodeView *nv) {
+		double rf = 3*NodeView::RAD*nodes.size();
 		nv->pos = rf*vec2(unif(re), unif(re));
+		nv->setZValue(1.0);
 	}
 	
-	void init(LinkView *lv) {
-		
+	void init(LinkID id, LinkView *lv) {
+		lv->src = nodes[id.src];
+		lv->dst = nodes[id.dst];
+		lv->setZValue(0.0);
 	}
 	
 	template <typename K, typename VS, typename VD>
@@ -113,9 +70,9 @@ private:
 			auto ii = dst.find(id);
 			if(ii == dst.end()) {
 				it = new VD();
-				init(it);
+				init(id, it);
 				ii = dst.insert(std::make_pair(id, it)).first;
-				scene.addItem(it);
+				scene->addItem(it);
 			} else {
 				it = ii->second;
 			}
@@ -128,27 +85,54 @@ private:
 				++ii;
 			} else {
 				auto iv = ii->second;
-				scene.removeItem(iv);
+				scene->removeItem(iv);
 				dst.erase(ii++);
 				delete iv;
 			}
 		}
 	}
 	
+	void timer_func() {
+		int ms = 40;
+		move(1e-3*ms);
+		update();
+		if(!done) {
+			QTimer::singleShot(ms, [this](){timer_func();});
+		}
+	}
+	
 public:
+	void startAnim() {
+		done = false;
+		timer_func();
+	}
+	
+	void stopAnim() {
+		done = true;
+	}
+	
 	void sync(const NetworkGene &net) {
 		sync_map(net.nodes, nodes);
 		sync_map(net.links, links);
 	}
 	
 	void move(double dt) {
+		for(auto &nv0 : nodes) {
+			for(auto &nv1 : nodes) {
+				if(nv0.first < nv1.first) {
+					LinkView::repulse(nv0.second, nv1.second);
+				}
+			}
+		}
 		for(auto &lv : links) {
-			lv.second->affect();
+			lv.second->attract();
 		}
 		for(auto &nv : nodes) {
 			nv.second->move(dt);
 		}
-		
+		for(auto &lv : links) {
+			lv.second->move(dt);
+		}
 		
 		vec2 rb = vec2(0,0), lt = vec2(0,0);
 		bool first = true;
@@ -169,8 +153,10 @@ public:
 		}
 		
 		vec2 xy = 0.5*(rb + lt);
-		vec2 wh = 0.6*(rb - lt);
-		scene.setSceneRect(xy.x() - wh.x(), xy.y() - wh.y(), 2*wh.x(), 2*wh.y());
+		vec2 wh = 0.7*(rb - lt);
+		scene->setSceneRect(xy.x() - wh.x(), xy.y() - wh.y(), 2*wh.x(), 2*wh.y());
+		
+		fit();
 	}
 	
 	void initView() {

@@ -1,0 +1,1 @@
+#include <genn/nodeview.hpp>

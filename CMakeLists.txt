@@ -4,7 +4,17 @@ project(libgenn-qt)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS}")
 
-include_directories(${LIBLA} ${QT5_INCLUDE} ${QT5_INCLUDE}/QtWidgets ${QT5_INCLUDE}/QtCore ${QT5_INCLUDE}/QtGui)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5Widgets REQUIRED)
+include_directories(${Qt5Core_INCLUDE_DIRS})
+include_directories(${Qt5Gui_INCLUDE_DIRS})
+include_directories(${Qt5Widgets_INCLUDE_DIRS})
+
+include_directories(${LIBLA})
 
 add_subdirectory(libgenn)
 include_directories(${LIBGENN})
