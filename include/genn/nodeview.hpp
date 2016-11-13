@@ -2,7 +2,7 @@
 
 #include <QGraphicsItem>
 
-#include <genn/network.hpp>
+#include <genn/genetics.hpp>
 
 #include <la/vec.hpp>
 
@@ -17,7 +17,7 @@ public:
 	vec2 vel = vec2(0,0);
 	double rad = RAD;
 	
-	void sync(const NodeGene &node) {
+	void sync(const Node &node) {
 		bias = node.bias;
 	}
 	

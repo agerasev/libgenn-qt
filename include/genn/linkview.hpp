@@ -2,7 +2,7 @@
 
 #include <QGraphicsItem>
 
-#include <genn/network.hpp>
+#include <genn/genetics.hpp>
 
 #include <la/vec.hpp>
 
@@ -16,7 +16,11 @@ public:
 	NodeView *src = nullptr;
 	NodeView *dst = nullptr;
 	
-	void sync(const LinkGene &link) {
+	static constexpr double fattr = 1e0;
+	static constexpr double frep = 1e2;
+	static constexpr double eqrad = sqrt(frep/fattr);
+	
+	void sync(const Link &link) {
 		weight = link.weight;
 		move(0.0);
 		QPen pen;
@@ -26,6 +30,7 @@ public:
 	}
 	
 	static void repulse(NodeView *n0, NodeView *n1) {
+		/*
 		vec2 r = n1->pos - n0->pos;
 		double l = length(r);
 		double f = l - 4.0*(n0->rad + n1->rad);
@@ -34,18 +39,19 @@ public:
 			n0->vel += 2e0*d*f;
 			n1->vel -= 2e0*d*f;
 		}
-		/*
-		double a = 10.0*(n0->rad + n1->rad);
-		n0->vel -= a*r/(l*l);
-		n1->vel += a*r/(l*l);
 		*/
+		vec2 s = n0->pos, d = n1->pos;
+		vec2 r = d - s;
+		r = r/dot(r,r);
+		n0->vel -= frep*r;
+		n1->vel += frep*r;
 	}
 	
 	void attract() {
 		vec2 s = src->pos, d = dst->pos;
 		vec2 r = d - s;
-		src->vel += 1e-1*r;
-		dst->vel -= 1e-1*r;
+		src->vel += fattr*r;
+		dst->vel -= fattr*r;
 	}
 	
 	void move(double dt) {
