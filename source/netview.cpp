@@ -28,7 +28,7 @@ NetView::~NetView() {
 }
 
 void NetView::init(NodeID id, NodeView *nv) {
-	double rf = LinkView::eqrad*ceil(sqrt(nodes.size()));
+	double rf = LinkView::RAD*ceil(sqrt(nodes.size()));
 	nv->pos = rf*vec2(unif(re), unif(re));
 	nv->setZValue(1.0);
 }
@@ -37,6 +37,25 @@ void NetView::init(LinkID id, LinkView *lv) {
 	lv->src = nodes[id.src];
 	lv->dst = nodes[id.dst];
 	lv->setZValue(0.0);
+	
+	auto it = links.find(LinkID(id.dst, id.src));
+	if(it != links.end()) {
+		lv->bidir = true;
+		LinkView *olv = it->second;
+		olv->bidir = true;
+	}
+}
+
+void NetView::quit(NodeID id, NodeView *nv) {
+	
+}
+
+void NetView::quit(LinkID id, LinkView *lv) {
+	auto it = links.find(LinkID(id.dst, id.src));
+	if(it != links.end()) {
+		LinkView *olv = it->second;
+		olv->bidir = false;
+	}
 }
 
 void NetView::move(double dt) {

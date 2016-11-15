@@ -37,6 +37,8 @@ public:
 private:
 	void init(NodeID id, NodeView *nv);
 	void init(LinkID id, LinkView *lv);
+	void quit(NodeID id, NodeView *nv);
+	void quit(LinkID id, LinkView *lv);
 	
 	template <typename K, typename VS, typename VD>
 	void sync_map(const std::map<K, VS> &src, std::map<K, VD*> &dst) {
@@ -66,6 +68,7 @@ private:
 				++ii;
 			} else {
 				auto iv = ii->second;
+				quit(ii->first, iv);
 				scene->removeItem(iv);
 				dst.erase(ii++);
 				delete iv;
