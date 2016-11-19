@@ -23,7 +23,7 @@ set(INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include ${LIBGENN})
 set(LIBGENN_QT ${INCLUDE} PARENT_SCOPE)
 include_directories(${INCLUDE} ${LIBLA})
 
-set(SOURCE source/netview.cpp)
+set(SOURCE source/netview.cpp source/util.cpp)
 
 add_library(genn-qt STATIC ${SOURCE})
 target_link_libraries(genn ${LIBS})

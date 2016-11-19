@@ -1,14 +1,20 @@
 #pragma once
 
 #include <QGraphicsItem>
+#include <QPainter>
 
 #include <genn/genetics.hpp>
 
 #include <la/vec.hpp>
 
+#include "util.hpp"
+
 class NodeView : public QGraphicsItem {
 public:
 	constexpr static const double RAD = 1;
+	
+	NodeID id;
+	// QStaticText text;
 	
 	bool exist = true;
 	
@@ -26,6 +32,10 @@ public:
 		vel = vec2(0,0);
 	}
 	
+	void set_id(NodeID id_) {
+		id = id_;
+	}
+	
 	QRectF boundingRect() const override {
 		return QRectF(pos.x() - rad, pos.y() - rad, 2*rad, 2*rad);
 	}
@@ -34,5 +44,12 @@ public:
 		painter->setBrush(QBrush(QColor(255*(bias > 0)*(1 - exp(-bias)),0,255*(bias < 0)*(1 - exp(bias)))));
 		painter->setPen(Qt::NoPen);
 		painter->drawEllipse(boundingRect());
+		
+		painter->setPen(QPen(QColor(255,255,255)));
+		QFont f = painter->font();
+		f.setPointSizeF(RAD);
+		painter->setFont(f);
+		vec2 tp = vec2(boundingRect().x(), boundingRect().y()) + RAD*vec2(0.7, 1.3);
+		painter->drawText(qpoint(tp), std::to_string(id).c_str());
 	}
 };

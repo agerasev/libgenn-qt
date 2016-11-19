@@ -27,10 +27,10 @@ public:
 	std::uniform_real_distribution<> unif;
 	
 	bool done = true;
-	const Network *net;
+	const Network *net = nullptr;
 	
 	std::mutex mtx;
-	NetView(const Network *n);
+	NetView();
 
 	virtual ~NetView();
 	
@@ -79,7 +79,7 @@ private:
 	void timer_func() {
 		int ms = 40;
 		
-		sync(net);
+		sync();
 		move(1e-3*ms);
 		update();
 		
@@ -98,10 +98,18 @@ public:
 		done = true;
 	}
 	
-	void sync(const Network *net) {
+	void sync() {
 		mtx.lock();
-		sync_map(net->nodes, nodes);
-		sync_map(net->links, links);
+		if(net != nullptr) {
+			sync_map(net->nodes, nodes);
+			sync_map(net->links, links);
+		}
+		mtx.unlock();
+	}
+	
+	void connect(const Network *n) {
+		mtx.lock();
+		net = n;
 		mtx.unlock();
 	}
 	

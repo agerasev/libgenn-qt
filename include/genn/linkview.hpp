@@ -9,9 +9,7 @@
 
 #include "nodeview.hpp"
 
-static QPointF qpoint(const vec2 &v) {
-	return QPointF(v.x(), v.y());
-}
+#include "util.hpp"
 
 class LinkView : public QGraphicsItem {
 public:
@@ -68,8 +66,8 @@ public:
 		pen.setWidthF(0.25);
 		painter->setPen(pen);
 		if(src == dst) {
-			double lbrad = 1.5*NodeView::RAD;
-			painter->drawEllipse(QPointF(spos.x(), spos.y() - lbrad), lbrad, lbrad);
+			double lbrad = 1.2*NodeView::RAD;
+			painter->drawEllipse(QPointF(spos.x(), spos.y() - 0.8*lbrad), lbrad, lbrad);
 		} else {
 			if(length(dst->pos - src->pos) > src->rad + dst->rad) {
 				vec2 dir = normalize(dpos - spos);
@@ -84,8 +82,8 @@ public:
 				} else {
 					painter->drawLine(qpoint(spos), qpoint(dpos));
 				}
-				painter->drawLine(qpoint(mid + 0.5*NodeView::RAD*(dir + ort)), qpoint(mid));
-				painter->drawLine(qpoint(mid + 0.5*NodeView::RAD*(dir - ort)), qpoint(mid));
+				painter->drawLine(qpoint(mid + 0.5*NodeView::RAD*(-dir + ort)), qpoint(mid));
+				painter->drawLine(qpoint(mid + 0.5*NodeView::RAD*(-dir - ort)), qpoint(mid));
 			}
 		}
 	}

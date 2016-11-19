@@ -11,7 +11,7 @@
 #include <la/vec.hpp>
 
 
-NetView::NetView(const Network *n) : QGraphicsView(), net(n) {
+NetView::NetView() : QGraphicsView() {
 	scene = new QGraphicsScene();
 	setScene(scene);
 	
@@ -31,6 +31,7 @@ void NetView::init(NodeID id, NodeView *nv) {
 	double rf = LinkView::RAD*ceil(sqrt(nodes.size()));
 	nv->pos = rf*vec2(unif(re), unif(re));
 	nv->setZValue(1.0);
+	nv->set_id(id);
 }
 
 void NetView::init(LinkID id, LinkView *lv) {
