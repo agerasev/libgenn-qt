@@ -26,7 +26,7 @@ public:
 	static constexpr double FORCE = 1e0;
 	static constexpr double RAD = 4*NodeView::RAD;
 	
-	void sync(const Link &link) {
+	void sync(const LinkGene &link) {
 		weight = link.weight;
 		move(0.0);
 	}

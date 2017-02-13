@@ -23,7 +23,7 @@ public:
 	vec2 vel = vec2(0,0);
 	double rad = RAD;
 	
-	void sync(const Node &node) {
+	void sync(const NodeGene &node) {
 		bias = node.bias;
 	}
 	

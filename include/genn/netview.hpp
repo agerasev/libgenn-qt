@@ -27,7 +27,7 @@ public:
 	std::uniform_real_distribution<> unif;
 	
 	bool done = true;
-	const Network *net = nullptr;
+	const NetworkGene *net = nullptr;
 	
 	std::mutex mtx;
 	NetView();
@@ -107,7 +107,7 @@ public:
 		mtx.unlock();
 	}
 	
-	void connect(const Network *n) {
+	void connect(const NetworkGene *n) {
 		mtx.lock();
 		net = n;
 		mtx.unlock();
