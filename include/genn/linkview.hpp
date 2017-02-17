@@ -9,11 +9,12 @@
 
 #include "nodeview.hpp"
 
-#include "util.hpp"
+#include "common.hpp"
 
 class LinkView : public QGraphicsItem {
 public:
-	bool exist = true;
+	bool fadd = true;
+	bool fdel = false;
 	
 	float weight = 0.0f;
 	NodeView *src = nullptr;

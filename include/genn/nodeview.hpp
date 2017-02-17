@@ -7,16 +7,17 @@
 
 #include <la/vec.hpp>
 
-#include "util.hpp"
+#include "common.hpp"
 
 class NodeView : public QGraphicsItem {
 public:
 	constexpr static const double RAD = 1;
 	
+	bool fadd = true;
+	bool fdel = false;
+	
 	NodeID id;
 	// QStaticText text;
-	
-	bool exist = true;
 	
 	float bias = 0.0f;
 	vec2 pos = vec2(0,0);

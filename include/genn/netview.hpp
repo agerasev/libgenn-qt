@@ -13,6 +13,7 @@
 
 #include <la/vec.hpp>
 
+#include "common.hpp"
 #include "nodeview.hpp"
 #include "linkview.hpp"
 
@@ -27,7 +28,6 @@ public:
 	std::uniform_real_distribution<> unif;
 	
 	bool done = true;
-	const NetworkGene *net = nullptr;
 	
 	std::mutex mtx;
 	NetView();
@@ -40,38 +40,58 @@ private:
 	void quit(NodeID id, NodeView *nv);
 	void quit(LinkID id, LinkView *lv);
 	
+	// TODO manage states
+	
 	template <typename K, typename VS, typename VD>
-	void sync_map(const std::map<K, VS> &src, std::map<K, VD*> &dst) {
+	void sync_map(const GeneMap<K, VS> &src, std::map<K, VD*> &dst) {
 		for(auto &p : dst) {
-			p.second->exist = false;
+			p.second->fdel = true;
 		}
 		
-		for(const auto &ep : src) {
-			const K &id = ep.first;
-			const VS &e = ep.second;
+		src.iter([&] (K id, const VS &e) {
 			VD *it = nullptr;
 			auto ii = dst.find(id);
 			if(ii == dst.end()) {
 				it = new VD();
+				it->fadd = true;
 				init(id, it);
 				ii = dst.insert(std::make_pair(id, it)).first;
-				scene->addItem(it);
 			} else {
 				it = ii->second;
 			}
+			it->fdel = false;
 			it->sync(e);
-			it->exist = true;
-		}
+		});
 		
 		for(auto ii = dst.begin(); ii != dst.end();) {
-			if(ii->second->exist) {
-				++ii;
-			} else {
-				auto iv = ii->second;
+			VD *iv = ii->second;
+			if (iv->fadd && iv->fdel) {
 				quit(ii->first, iv);
-				scene->removeItem(iv);
 				dst.erase(ii++);
 				delete iv;
+			} else {
+				++ii;
+			}
+		}
+	}
+	
+	template <typename K, typename V>
+	void sync_scene(std::map<K, V*> &map) {
+		for(auto ii = map.begin(); ii != map.end();) {
+			V *iv = ii->second;
+			if (iv->fdel) {
+				if (!iv->fadd) {
+					scene->removeItem(iv);
+				}
+				quit(ii->first, iv);
+				map.erase(ii++);
+				delete iv;
+			} else {
+				if (iv->fadd) {
+					scene->addItem(iv);
+					iv->fadd = false;
+				}
+				++ii;
 			}
 		}
 	}
@@ -79,9 +99,14 @@ private:
 	void timer_func() {
 		int ms = 40;
 		
-		sync();
-		move(1e-3*ms);
-		update();
+		mtx.lock();
+		{
+			sync_scene(nodes);
+			sync_scene(links);
+			move(1e-3*ms);
+			update();
+		}
+		mtx.unlock();
 		
 		if(!done) {
 			QTimer::singleShot(ms, [this](){timer_func();});
@@ -98,18 +123,12 @@ public:
 		done = true;
 	}
 	
-	void sync() {
+	void sync(const NetworkGene &net) {
 		mtx.lock();
-		if(net != nullptr) {
-			sync_map(net->nodes, nodes);
-			sync_map(net->links, links);
+		{
+			sync_map(net.nodes, nodes);
+			sync_map(net.links, links);
 		}
-		mtx.unlock();
-	}
-	
-	void connect(const NetworkGene *n) {
-		mtx.lock();
-		net = n;
 		mtx.unlock();
 	}
 	
