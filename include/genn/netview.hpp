@@ -16,8 +16,9 @@
 #include "common.hpp"
 #include "nodeview.hpp"
 #include "linkview.hpp"
+#include "asyncanim.hpp"
 
-class NetView : public QGraphicsView {
+class NetView : public QGraphicsView, public AsyncAnim {
 	Q_OBJECT
 public:
 	QGraphicsScene *scene;
@@ -26,8 +27,6 @@ public:
 	
 	std::minstd_rand re;
 	std::uniform_real_distribution<> unif;
-	
-	bool done = true;
 	
 	std::mutex mtx;
 	NetView();
@@ -96,31 +95,16 @@ private:
 		}
 	}
 	
-	void timer_func() {
-		int ms = 40;
-		
+public:
+	virtual void anim() override {
 		mtx.lock();
 		{
 			sync_scene(nodes);
 			sync_scene(links);
-			move(1e-3*ms);
+			move(1e-3*delay_ms);
 			update();
 		}
 		mtx.unlock();
-		
-		if(!done) {
-			QTimer::singleShot(ms, [this](){timer_func();});
-		}
-	}
-	
-public:
-	void startAnim() {
-		done = false;
-		timer_func();
-	}
-	
-	void stopAnim() {
-		done = true;
 	}
 	
 	void sync(const NetworkGene &net) {
