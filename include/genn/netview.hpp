@@ -1,13 +1,13 @@
 #pragma once
 
 #include <random>
-#include <mutex>
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QWheelEvent>
 #include <QTimer>
+#include <QMutex>
 
 #include <genn/genetics.hpp>
 
@@ -28,7 +28,7 @@ public:
 	std::minstd_rand re;
 	std::uniform_real_distribution<> unif;
 	
-	std::mutex mtx;
+	QMutex mtx;
 	NetView();
 
 	virtual ~NetView();

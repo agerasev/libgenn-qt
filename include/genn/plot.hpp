@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <QPainter>
 #include <QTimer>
+#include <QMutex>
 
 #include "common.hpp"
 #include "asyncanim.hpp"
@@ -17,7 +18,7 @@ public:
 		LOG_SCALE_X = 0x01,
 		LOG_SCALE_Y = 0x02;
 	
-	std::mutex mtx;
+	QMutex mtx;
 	std::vector<std::pair<double, double>> points;
 	std::vector<QPointF> buffer;
 	double xmin, xmax, ymin, ymax;
@@ -87,6 +88,8 @@ public:
 	}
 	
 	void paintEvent(QPaintEvent *event) override {
+		mtx.lock();
+		
 		QWidget::paintEvent(event);
 		QPainter painter(this);
 		painter.setRenderHint(QPainter::Antialiasing, false);
@@ -129,7 +132,7 @@ public:
 				if (!logx) {
 					text = std::to_string(i) + 'e' + std::to_string(px);
 				} else {
-					text = std::to_string(int(i*bx));
+					text = std::to_string(i) + 'e' + std::to_string(px);
 				}
 				painter.drawText(QPointF(map_x(i*bx) + 2, rect().height()), QString(text.c_str()));
 				painter.drawLine(QPointF(map_x(i*bx), rect().height() - border), QPointF(map_x(i*bx), rect().height()));
@@ -159,7 +162,7 @@ public:
 				if (!logy) {
 					text = std::to_string(i) + 'e' + std::to_string(py);
 				} else {
-					text = std::to_string(int(i*by));
+					text = std::to_string(i) + 'e' + std::to_string(py);
 				}
 				painter.drawText(QPointF(0, map_y(i*by) - 2), QString(text.c_str()));
 				painter.drawLine(QPointF(0, map_y(i*by)), QPointF(border, map_y(i*by)));
@@ -173,7 +176,7 @@ public:
 		pen.setWidthF(2.0);
 		painter.setPen(pen);
 		
-		mtx.lock();
+		
 		if (points.size() > 0) {
 			for (int i = 0; i < int(points.size()); ++i) {
 				double x = points[i].first, y = points[i].second;
@@ -183,13 +186,17 @@ public:
 				px = x;
 				py = y;
 			}
+			painter.drawPolyline(buffer.data(), buffer.size());
 		}
-		mtx.unlock();
 		
-		painter.drawPolyline(buffer.data(), buffer.size());
+		mtx.unlock();
 	}
 	
 	virtual void anim() override {
-		update();
+		mtx.lock();
+		{
+			update();
+		}
+		mtx.unlock();
 	}
 };
